@@ -66,10 +66,18 @@ jobs:
           name: image-reference
           path: ./image_ref.txt
 
+  test-pre-dev:
+    name: "Pre-Deploy Test (Dev)"
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Pre-Deploy Test (Dev)"
+
   deploy-dev:
     name: "Deploy to Dev"
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: test-pre-dev
     environment:
       name: dev
       url: ${{ steps.deploy.outputs.url }}
@@ -103,10 +111,26 @@ jobs:
             RELEASE_VERSION=${{ github.event.client_payload.tag_name }}
             BACKEND_URL=${{ vars.BACKEND_URL_DEV }}
 
+  test-post-dev:
+    name: "Post-Deploy Test (Dev)"
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Post-Deploy Test (Dev)"
+
+  test-pre-staging:
+    name: "Pre-Deploy Test (Staging)"
+    runs-on: ubuntu-latest
+    needs: test-post-dev
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Pre-Deploy Test (Staging)"
+
   deploy-staging:
     name: "Deploy to Staging"
     runs-on: ubuntu-latest
-    needs: deploy-dev
+    needs: test-pre-staging
     environment:
       name: staging
       url: ${{ steps.deploy.outputs.url }}
@@ -140,10 +164,42 @@ jobs:
             RELEASE_VERSION=${{ github.event.client_payload.tag_name }}
             BACKEND_URL=${{ vars.BACKEND_URL_STAGING }}
 
+  test-post-staging:
+    name: "Post-Deploy Test (Staging)"
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Post-Deploy Test (Staging)"
+
+  test-pre-production-1:
+    name: "Pre-Deploy Test 1 (Production)"
+    runs-on: ubuntu-latest
+    needs: test-post-staging
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Pre-Deploy Test 1 (Production)"
+
+  test-pre-production-2:
+    name: "Pre-Deploy Test 2 (Production)"
+    runs-on: ubuntu-latest
+    needs: test-post-staging
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Pre-Deploy Test 2 (Production)"
+
+  test-pre-production-3:
+    name: "Pre-Deploy Test 3 (Production)"
+    runs-on: ubuntu-latest
+    needs: test-post-staging
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Pre-Deploy Test 3 (Production)"
+
   deploy-production:
     name: "Deploy to Production"
     runs-on: ubuntu-latest
-    needs: deploy-staging
+    needs: [test-pre-production-1, test-pre-production-2, test-pre-production-3]
     environment:
       name: production
       url: ${{ steps.deploy.outputs.url }}
@@ -177,3 +233,11 @@ jobs:
           env_vars: |
             RELEASE_VERSION=${{ github.event.client_payload.tag_name }}
             BACKEND_URL=${{ vars.BACKEND_URL_PRODUCTION }}
+
+  test-post-production:
+    name: "Post-Deploy Test (Production)"
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    steps:
+      - name: "Hello World"
+        run: echo "Hello World - Post-Deploy Test (Production)"
